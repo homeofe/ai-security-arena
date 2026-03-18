@@ -16,6 +16,9 @@
 ### Match History (with saved battles)
 ![Match History](docs/screenshots/history-with-match.jpg)
 
+### Replay Viewer (VCR controls, step-by-step playback)
+![Replay Viewer](docs/screenshots/replay-viewer.jpg)
+
 ### Leaderboard (model rankings after battles)
 ![Leaderboard](docs/screenshots/leaderboard-with-data.jpg)
 
