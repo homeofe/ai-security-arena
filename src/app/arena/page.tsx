@@ -547,6 +547,12 @@ export default function ArenaPage() {
                 {battleConfig.providerMode === "cli" && " (CLI mode)"}
               </div>
             </div>
+            <a
+              href="/report"
+              className="glass-card px-6 py-3 text-sm font-semibold text-purple-300 hover:border-purple-500/50 transition inline-flex items-center gap-2"
+            >
+              📊 View Report
+            </a>
             <button
               onClick={handleReset}
               className="start-button rounded-xl px-8 py-3 text-sm font-bold text-white cursor-pointer"

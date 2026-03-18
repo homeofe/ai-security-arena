@@ -125,6 +125,58 @@ export interface CliStatus {
   codex: boolean;
 }
 
+// ── Battle Report ─────────────────────────────────────────────────────────────
+
+/** Raw LLM reasoning per turn (the full thought process, not just extracted action) */
+export interface TurnReasoning {
+  round: number;
+  team: Team;
+  rawResponse: string;      // full LLM output
+  parsedEvent: BattleEvent; // what was extracted
+  promptSent: string;       // what was sent to the LLM
+  thinkingTime: number;     // ms the LLM took to respond
+  tokensUsed?: number;
+}
+
+/** Battle report with full analysis */
+export interface BattleReport {
+  match: MatchSummary;
+  events: BattleEvent[];
+  reasoning: TurnReasoning[];
+  turningPoints: TurningPoint[];
+  strategyAnalysis: StrategyAnalysis;
+  timeline: TimelineEntry[];
+}
+
+export interface TurningPoint {
+  round: number;
+  description: string;
+  team: Team;           // who gained advantage
+  scoreDelta: number;   // score shift
+}
+
+export interface StrategyAnalysis {
+  red: TeamStrategy;
+  blue: TeamStrategy;
+}
+
+export interface TeamStrategy {
+  phases: Record<string, number>;    // count per phase (RECON: 3, EXPLOIT: 5)
+  successRate: number;               // 0-1
+  adaptations: string[];             // moments where strategy changed
+  strengths: string[];
+  weaknesses: string[];
+}
+
+export interface TimelineEntry {
+  timestamp: number;
+  round: number;
+  redEvent?: BattleEvent;
+  blueEvent?: BattleEvent;
+  cumulativeRedScore: number;
+  cumulativeBlueScore: number;
+}
+
 // ── WebSocket ─────────────────────────────────────────────────────────────────
 
 export type WsMessageType =

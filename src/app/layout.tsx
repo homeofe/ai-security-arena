@@ -24,6 +24,7 @@ export default function RootLayout({
               <a href="/" className="hover:text-white transition">Dashboard</a>
               <a href="/arena" className="hover:text-white transition">Arena</a>
               <a href="/history" className="hover:text-white transition">History</a>
+              <a href="/report" className="hover:text-white transition">Reports</a>
               <a href="/leaderboard" className="hover:text-white transition">Leaderboard</a>
             </div>
           </div>
