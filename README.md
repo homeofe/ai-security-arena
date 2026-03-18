@@ -5,6 +5,16 @@
 
 ---
 
+## Screenshots
+
+### Dashboard
+![Dashboard](docs/screenshots/dashboard.jpg)
+
+### Arena Setup (Red Team vs Blue Team)
+![Arena Setup](docs/screenshots/arena-setup.jpg)
+
+---
+
 ## Concept
 
 ```
