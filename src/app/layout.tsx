@@ -27,6 +27,7 @@ export default function RootLayout({
               <a href="/replay" className="hover:text-white transition">Replay</a>
               <a href="/report" className="hover:text-white transition">Reports</a>
               <a href="/leaderboard" className="hover:text-white transition">Leaderboard</a>
+              <a href="/scenarios" className="hover:text-white transition">Scenarios</a>
             </div>
           </div>
         </nav>
