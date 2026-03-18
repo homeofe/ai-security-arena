@@ -13,6 +13,9 @@
 ### Arena Setup (Red Team vs Blue Team)
 ![Arena Setup](docs/screenshots/arena-setup.jpg)
 
+### Battle Report (Post-Match Analysis)
+![Battle Report](docs/screenshots/battle-report.jpg)
+
 ---
 
 ## Concept
