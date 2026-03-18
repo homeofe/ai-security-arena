@@ -8,13 +8,13 @@
 ## Screenshots
 
 ### Dashboard
-![Dashboard](docs/screenshots/dashboard.jpg)
+![Dashboard](docs/screenshots/dashboard-live.jpg)
 
 ### Arena Setup (Red Team vs Blue Team)
-![Arena Setup](docs/screenshots/arena-setup.jpg)
+![Arena Setup](docs/screenshots/arena-setup-live.jpg)
 
 ### Battle Report (Post-Match Analysis)
-![Battle Report](docs/screenshots/battle-report.jpg)
+![Battle Report](docs/screenshots/battle-report-live.jpg)
 
 ### Match History
 ![Match History](docs/screenshots/history.jpg)
