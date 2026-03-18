@@ -16,6 +16,15 @@
 ### Battle Report (Post-Match Analysis)
 ![Battle Report](docs/screenshots/battle-report.jpg)
 
+### Match History
+![Match History](docs/screenshots/history.jpg)
+
+### Leaderboard
+![Leaderboard](docs/screenshots/leaderboard.jpg)
+
+### Scenario Builder
+![Scenario Builder](docs/screenshots/scenario-builder.jpg)
+
 ---
 
 ## Concept
