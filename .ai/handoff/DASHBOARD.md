@@ -1,7 +1,7 @@
 # ai-security-arena: Build Dashboard
 
 > Single source of truth for build health, test coverage, and pipeline state.
-> Updated: 2026-03-18 11:20
+> Updated: 2026-03-18 12:00
 
 ---
 
@@ -22,7 +22,7 @@
 | Mock battle engine | 0.1.0 | ✅ | - | ✅ | Realistic cybersecurity events |
 | Dashboard page | 0.1.0 | ✅ | - | ✅ | Hero, stats, scenario cards |
 | Arena page | 0.1.0 | ✅ | - | ✅ | Setup + battle phases, provider toggle |
-| Report page | 0.1.0 | ✅ | - | 🔧 | Being built by subagent |
+| Report page | 0.1.0 | ✅ | - | ✅ | Timeline, reasoning, strategy, turning points, export |
 | API: cli-status | 0.1.0 | ✅ | - | ✅ | GET endpoint for CLI detection |
 | API: battle | 0.1.0 | ✅ | - | ✅ | POST endpoint for CLI battle turns |
 | ModelPicker | 0.1.0 | ✅ | - | ✅ | Card grid, provider icons, cost tiers |
@@ -32,16 +32,16 @@
 | BattleHeader | 0.1.0 | ✅ | - | ✅ | Round counter, timer, cost |
 | ScoreBar | 0.1.0 | ✅ | - | ✅ | Animated red/blue progress |
 | PhaseIcon | 0.1.0 | ✅ | - | ✅ | Color-coded phase badges |
-| ReportHeader | 0.1.0 | ✅ | - | 🔧 | Classified intel header |
-| ScoreOverview | 0.1.0 | ✅ | - | 🔧 | Score display + stat comparison |
-| DecisionTimeline | 0.1.0 | ✅ | - | 🔧 | Vertical alternating timeline |
-| ReasoningViewer | 0.1.0 | ✅ | - | 🔧 | Expandable prompt/response viewer |
-| StrategyBreakdown | 0.1.0 | ✅ | - | 🔧 | Side-by-side strategy analysis |
-| TurningPoints | 0.1.0 | ✅ | - | 🔧 | Highlighted momentum shifts |
-| ExportButtons | 0.1.0 | ✅ | - | 🔧 | JSON + PDF + share |
-| ScoreChart | 0.1.0 | ✅ | - | 🔧 | Pure CSS/SVG bar chart |
+| ReportHeader | 0.1.0 | ✅ | - | ✅ | Classified intel header + CLASSIFIED watermark |
+| ScoreOverview | 0.1.0 | ✅ | - | ✅ | Large score display + percentage bar |
+| ScoreChart | 0.1.0 | ✅ | - | ✅ | Pure CSS/SVG bar + line charts |
+| DecisionTimeline | 0.1.0 | ✅ | - | ✅ | Vertical alternating timeline |
+| ReasoningViewer | 0.1.0 | ✅ | - | ✅ | Expandable prompt/response per round |
+| StrategyBreakdown | 0.1.0 | ✅ | - | ✅ | Side-by-side strategy analysis |
+| TurningPoints | 0.1.0 | ✅ | - | ✅ | Momentum shift highlights |
+| ExportButtons | 0.1.0 | ✅ | - | ✅ | JSON/PDF/share export |
 
-**Legend:** ✅ passing | ❌ failing | 🔵 stub/mock | ⏳ pending | 🔧 in progress | 🔴 blocked
+**Legend:** ✅ passing | ❌ failing | 🔵 stub/mock | ⏳ pending | 🔴 blocked
 
 ---
 
@@ -61,7 +61,7 @@
 | Component | Status | Notes |
 |-----------|--------|-------|
 | Local dev (next dev) | ✅ | Port 3333 |
-| Next.js build | ✅ | Clean, 10.6kB arena page |
+| Next.js build | ✅ | Clean |
 | TypeScript strict | ✅ | tsc --noEmit passes |
 | Docker | ⏳ | Not configured |
 | Vercel | ⏳ | Not deployed |
@@ -74,7 +74,7 @@
 |-------|--------|-------------|
 | `/` | ✅ | Dashboard (hero, stats, scenarios) |
 | `/arena` | ✅ | Battle setup + live battle view |
-| `/report` | 🔧 | Battle report (building) |
+| `/report` | ✅ | Battle report (timeline, reasoning, strategy, export) |
 | `/history` | ⏳ | Match history (not started) |
 | `/leaderboard` | ⏳ | Model rankings (not started) |
 
