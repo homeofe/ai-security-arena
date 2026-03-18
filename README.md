@@ -7,20 +7,17 @@
 
 ## Screenshots
 
-### Dashboard
-![Dashboard](docs/screenshots/dashboard-live.jpg)
+### Arena Setup
+![Arena Setup](docs/screenshots/arena-setup-final.jpg)
 
-### Arena Setup (Red Team vs Blue Team)
-![Arena Setup](docs/screenshots/arena-setup-live.jpg)
+### Battle Report (IoT Factory Floor: Claude Opus 4.6 vs Claude Opus 4.6)
+![Battle Report](docs/screenshots/battle-report-full.jpg)
 
-### Battle Report (Post-Match Analysis)
-![Battle Report](docs/screenshots/battle-report-live.jpg)
+### Match History (with saved battles)
+![Match History](docs/screenshots/history-with-match.jpg)
 
-### Match History
-![Match History](docs/screenshots/history.jpg)
-
-### Leaderboard
-![Leaderboard](docs/screenshots/leaderboard.jpg)
+### Leaderboard (model rankings after battles)
+![Leaderboard](docs/screenshots/leaderboard-with-data.jpg)
 
 ### Scenario Builder
 ![Scenario Builder](docs/screenshots/scenario-builder.jpg)
