@@ -1,6 +1,6 @@
 # NEXT_ACTIONS - ai-security-arena
 
-> Priority order. Work top-down. Updated 2026-03-18.
+> Priority order. Work top-down. Updated 2026-03-18 11:20.
 
 ---
 
@@ -8,9 +8,9 @@
 
 | Status | Count |
 |--------|-------|
-| Done | 1 |
-| In Progress | 2 |
-| Ready | 12 |
+| Done | 5 |
+| In Progress | 1 |
+| Ready | 11 |
 | Blocked | 0 |
 
 ---
@@ -19,8 +19,7 @@
 
 | Task | Title | Assignee |
 |------|-------|----------|
-| T-002 | Arena page: setup phase + battle phase UI | subagent:arena-page-builder |
-| T-003 | Mock battle system for demo | subagent:arena-page-builder |
+| T-017 | Battle Report page (timeline, reasoning, strategy, export) | subagent:arena-report-page |
 
 ---
 
@@ -39,7 +38,6 @@
 | T-012 | AAHP evolution tracker | Low |
 | T-013 | Match export (JSON + PDF reports) | Low |
 | T-014 | Budget limiter with cost tracking | Low |
-| T-015 | Deployment: Docker + Vercel config | Low |
 
 ---
 
@@ -53,4 +51,7 @@ _No blocked tasks._
 
 | Task | Title | Completed |
 |------|-------|-----------|
+| T-016 | CLI provider integration (claude/gemini/codex CLIs) | 2026-03-18 |
+| T-003 | Mock battle system for demo | 2026-03-18 |
+| T-002 | Arena page: setup phase + battle phase UI | 2026-03-18 |
 | T-001 | Initial project structure (Next.js + Tailwind + types + libs) | 2026-03-18 |
