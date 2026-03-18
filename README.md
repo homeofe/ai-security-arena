@@ -126,28 +126,39 @@ ai-security-arena/
 │   │       ├── ws/           # WebSocket endpoint
 │   │       └── matches/      # Match CRUD
 │   ├── components/
-│   │   ├── BattleLog.tsx     # Split-screen live log
-│   │   ├── ModelPicker.tsx   # Model selection per team
-│   │   ├── PromptEditor.tsx  # Custom prompt editor
-│   │   ├── ScenarioCard.tsx  # Scenario selection
-│   │   ├── Scoreboard.tsx    # Match scoring
-│   │   └── ReplayViewer.tsx  # Step-by-step replay
+│   │   ├── BattleLog.tsx         # Split-screen live log
+│   │   ├── BattleHeader.tsx      # Round counter, timer, cost
+│   │   ├── ModelPicker.tsx       # Model selection per team
+│   │   ├── PromptEditor.tsx      # Tabbed prompt editor (examples + custom)
+│   │   ├── ScenarioSelector.tsx  # Horizontal scroll scenario cards
+│   │   ├── ScoreBar.tsx          # Animated score comparison bar
+│   │   ├── PhaseIcon.tsx         # Color-coded phase badges
+│   │   ├── ReportHeader.tsx      # Classified intel briefing header
+│   │   ├── ScoreOverview.tsx     # Large score display + stats
+│   │   ├── ScoreChart.tsx        # Pure CSS/SVG bar + line charts
+│   │   ├── DecisionTimeline.tsx  # Vertical alternating timeline
+│   │   ├── ReasoningViewer.tsx   # Expandable LLM reasoning per round
+│   │   ├── StrategyBreakdown.tsx # Side-by-side strategy analysis
+│   │   ├── TurningPoints.tsx     # Momentum shift highlights
+│   │   └── ExportButtons.tsx     # JSON/PDF/share export
 │   ├── lib/
-│   │   ├── arena.ts          # Arena controller (orchestrates red + blue)
-│   │   ├── models.ts         # Available model registry
-│   │   ├── prompts.ts        # Example prompt library
-│   │   ├── scenarios.ts      # Built-in scenarios
-│   │   ├── scoring.ts        # Scoring engine
-│   │   ├── db.ts             # SQLite match storage
-│   │   └── ws.ts             # WebSocket server
+│   │   ├── arena.ts              # Arena controller (mock/cli/api modes)
+│   │   ├── cli-provider.ts       # CLI-based LLM provider (claude/gemini/codex)
+│   │   ├── prompt-builder.ts     # Battle prompt construction per round
+│   │   ├── response-parser.ts    # Parse LLM responses into BattleEvents
+│   │   ├── report-generator.ts   # Post-match analysis and report generation
+│   │   ├── mock-battle.ts        # Realistic mock battle events
+│   │   ├── models.ts             # Available model registry
+│   │   ├── prompts.ts            # Example prompt library
+│   │   ├── scenarios.ts          # Built-in scenarios
+│   │   └── scoring.ts            # Scoring engine
 │   └── types/
-│       └── index.ts          # Shared type definitions
-├── public/
-│   └── scenarios/            # Scenario config files
-├── prisma/                   # DB schema (if using Prisma)
+│       └── index.ts              # Shared type definitions
+├── .ai/handoff/                  # AAHP protocol files
+├── docs/screenshots/             # UI screenshots
 ├── package.json
 ├── next.config.ts
-├── tailwind.config.ts
+├── postcss.config.mjs
 ├── tsconfig.json
 └── vitest.config.ts
 ```
@@ -156,21 +167,23 @@ ai-security-arena/
 
 | # | Feature | Status |
 |---|---------|--------|
-| 1 | Project setup (Next.js + Tailwind + dependencies) | Planned |
-| 2 | Model picker + scenario selector UI | Planned |
-| 3 | Arena controller (integrate ai-red-team + ai-blue-team) | Planned |
-| 4 | WebSocket live battle log | Planned |
-| 5 | Split-screen battle view (Red vs Blue) | Planned |
-| 6 | Scoring engine | Planned |
-| 7 | Match history + SQLite persistence | Planned |
-| 8 | Round-by-round replay | Planned |
-| 9 | Leaderboard | Planned |
-| 10 | Custom prompt editor + example library | Planned |
-| 11 | Scenario builder | Planned |
-| 12 | AAHP evolution tracker | Planned |
-| 13 | Export (JSON/PDF) | Planned |
-| 14 | Budget limiter | Planned |
-| 15 | Deployment (Docker + Vercel) | Planned |
+| 1 | Project setup (Next.js + Tailwind + dependencies) | ✅ Done |
+| 2 | Model picker + scenario selector UI | ✅ Done |
+| 3 | Arena controller (mock + CLI + API modes) | ✅ Done |
+| 4 | Split-screen battle view (Red vs Blue) | ✅ Done |
+| 5 | Scoring engine | ✅ Done |
+| 6 | Custom prompt editor + example library | ✅ Done |
+| 7 | CLI provider integration (claude/gemini/codex) | ✅ Done |
+| 8 | Battle Report page (timeline, reasoning, strategy, export) | ✅ Done |
+| 9 | Export (JSON/PDF) | ✅ Done |
+| 10 | WebSocket live battle log | Planned |
+| 11 | Match history + SQLite persistence | Planned |
+| 12 | Round-by-round replay | Planned |
+| 13 | Leaderboard | Planned |
+| 14 | Scenario builder | Planned |
+| 15 | AAHP evolution tracker | Planned |
+| 16 | Budget limiter | Planned |
+| 17 | Deployment (Docker + Vercel) | Planned |
 
 ## License
 
