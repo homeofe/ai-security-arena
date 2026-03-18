@@ -176,14 +176,14 @@ ai-security-arena/
 | 7 | CLI provider integration (claude/gemini/codex) | ✅ Done |
 | 8 | Battle Report page (timeline, reasoning, strategy, export) | ✅ Done |
 | 9 | Export (JSON/PDF) | ✅ Done |
-| 10 | WebSocket live battle log | Planned |
-| 11 | Match history + SQLite persistence | Planned |
-| 12 | Round-by-round replay | Planned |
-| 13 | Leaderboard | Planned |
-| 14 | Scenario builder | Planned |
-| 15 | AAHP evolution tracker | Planned |
-| 16 | Budget limiter | Planned |
-| 17 | Deployment (Docker + Vercel) | Planned |
+| 10 | SSE real-time battle events | ✅ Done |
+| 11 | ai-red-team SDK integration | ✅ Done |
+| 12 | ai-blue-team SDK integration | ✅ Done |
+| 13 | Match history + SQLite persistence | ✅ Done |
+| 14 | Round-by-round replay viewer | ✅ Done |
+| 15 | Leaderboard with model rankings | ✅ Done |
+| 16 | Scenario builder | ✅ Done |
+| 17 | Deployment (Docker + Vercel) | ✅ Done |
 
 ## License
 
