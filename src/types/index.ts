@@ -34,6 +34,7 @@ export interface BattleConfig {
   bluePrompt?: string;
   maxRounds: number;
   budgetLimitUsd: number;
+  providerMode: ProviderMode;
 }
 
 export interface BattleEvent {
@@ -112,6 +113,16 @@ export interface PromptTemplate {
   category: string;
   prompt: string;
   description: string;
+}
+
+// ── Provider Modes ────────────────────────────────────────────────────────
+
+export type ProviderMode = "mock" | "cli" | "api";
+
+export interface CliStatus {
+  claude: boolean;
+  gemini: boolean;
+  codex: boolean;
 }
 
 // ── WebSocket ─────────────────────────────────────────────────────────────────

@@ -131,6 +131,17 @@
       "id": "T-015",
       "title": "Deployment: Docker + Vercel config",
       "status": "ready"
+    },
+    {
+      "id": "T-016",
+      "title": "CLI provider integration (claude/gemini/codex CLIs)",
+      "status": "in-progress",
+      "assignee": "subagent:arena-cli-integration"
+    },
+    {
+      "id": "T-017",
+      "title": "Battle Report page: post-match analysis with team reasoning, decision timeline, thinking process, and exportable reports",
+      "status": "ready"
     }
   ]
 }

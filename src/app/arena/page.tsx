@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback, useRef, useEffect } from "react";
-import type { ModelConfig, Scenario, BattleEvent, BattleScore, BattleConfig } from "@/types";
+import type { ModelConfig, Scenario, BattleEvent, BattleScore, BattleConfig, ProviderMode, CliStatus } from "@/types";
 import { calculateScore } from "@/lib/scoring";
 import { runMockBattle, type MockBattleController } from "@/lib/mock-battle";
 
@@ -18,6 +18,16 @@ function generateId(): string {
   return `battle-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
+// ── CLI Model Mapping (client-side mirror) ─────────────────────────────────
+
+function getCliNameForModel(modelId: string): keyof CliStatus | null {
+  const id = modelId.toLowerCase();
+  if (id.includes("claude") || id.includes("anthropic")) return "claude";
+  if (id.includes("gemini") || id.includes("google")) return "gemini";
+  if (id.includes("gpt") || id.includes("codex") || id.includes("openai")) return "codex";
+  return null;
+}
+
 export default function ArenaPage() {
   // ── Setup State ──────────────────────────────────────────────────────────
   const [redModel, setRedModel] = useState<ModelConfig | null>(null);
@@ -27,6 +37,9 @@ export default function ArenaPage() {
   const [scenario, setScenario] = useState<Scenario | null>(null);
   const [maxRounds, setMaxRounds] = useState(10);
   const [budgetLimit, setBudgetLimit] = useState(1.0);
+  const [providerMode, setProviderMode] = useState<ProviderMode>("mock");
+  const [cliStatus, setCliStatus] = useState<CliStatus | null>(null);
+  const [cliLoading, setCliLoading] = useState(false);
 
   // ── Battle State ─────────────────────────────────────────────────────────
   const [phase, setPhase] = useState<Phase>("setup");
@@ -41,9 +54,23 @@ export default function ArenaPage() {
   const [elapsedMs, setElapsedMs] = useState(0);
   const [costSoFar, setCostSoFar] = useState(0);
   const [battleConfig, setBattleConfig] = useState<BattleConfig | null>(null);
+  const [cliBattleRunning, setCliBattleRunning] = useState(false);
 
   const controllerRef = useRef<MockBattleController | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const abortRef = useRef<AbortController | null>(null);
+
+  // ── Fetch CLI Status ─────────────────────────────────────────────────────
+  useEffect(() => {
+    if (providerMode === "cli" && !cliStatus) {
+      setCliLoading(true);
+      fetch("/api/cli-status")
+        .then((res) => res.json())
+        .then((data) => setCliStatus(data))
+        .catch(() => setCliStatus({ claude: false, gemini: false, codex: false }))
+        .finally(() => setCliLoading(false));
+    }
+  }, [providerMode, cliStatus]);
 
   // ── Timer ────────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -60,10 +87,10 @@ export default function ArenaPage() {
   // ── Simulate cost accumulation ───────────────────────────────────────────
   useEffect(() => {
     if (events.length > 0) {
-      // Simulate small cost per event
-      setCostSoFar(events.length * 0.0023);
+      const costPerEvent = providerMode === "cli" ? 0.012 : 0.0023;
+      setCostSoFar(events.length * costPerEvent);
     }
-  }, [events.length]);
+  }, [events.length, providerMode]);
 
   // ── Recalculate score when events change ─────────────────────────────────
   useEffect(() => {
@@ -72,8 +99,130 @@ export default function ArenaPage() {
     }
   }, [events]);
 
+  // ── CLI Validation ───────────────────────────────────────────────────────
+  const cliValidationError = useCallback((): string | null => {
+    if (providerMode !== "cli") return null;
+    if (!cliStatus) return "Detecting CLIs...";
+    if (!redModel || !blueModel) return null;
+
+    const redCli = getCliNameForModel(redModel.id);
+    const blueCli = getCliNameForModel(blueModel.id);
+
+    if (!redCli) return `No CLI available for Red Team model: ${redModel.name}`;
+    if (!blueCli) return `No CLI available for Blue Team model: ${blueModel.name}`;
+    if (!cliStatus[redCli]) return `CLI '${redCli}' not installed (needed for ${redModel.name})`;
+    if (!cliStatus[blueCli]) return `CLI '${blueCli}' not installed (needed for ${blueModel.name})`;
+
+    return null;
+  }, [providerMode, cliStatus, redModel, blueModel]);
+
+  // ── CLI Battle Runner ────────────────────────────────────────────────────
+  const runCliBattle = useCallback(async (config: BattleConfig) => {
+    setCliBattleRunning(true);
+    const abort = new AbortController();
+    abortRef.current = abort;
+    const allEvents: BattleEvent[] = [];
+
+    try {
+      for (let round = 1; round <= config.maxRounds; round++) {
+        if (abort.signal.aborted) break;
+
+        setCurrentRound(round);
+
+        // Red Team turn
+        const redRes = await fetch("/api/battle", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          signal: abort.signal,
+          body: JSON.stringify({
+            team: "red",
+            modelId: config.redModel.id,
+            scenario: config.scenario,
+            round,
+            events: allEvents,
+            customPrompt: config.redPrompt,
+          }),
+        });
+
+        if (!redRes.ok) {
+          const err = await redRes.json().catch(() => ({ error: "Unknown error" }));
+          const errorEvent: BattleEvent = {
+            timestamp: Date.now(),
+            team: "red",
+            phase: "SYSTEM",
+            action: "error",
+            detail: `CLI error: ${err.error || "Request failed"}`,
+            success: false,
+          };
+          allEvents.push(errorEvent);
+          setEvents((prev) => [...prev, errorEvent]);
+          continue;
+        }
+
+        const redData = await redRes.json();
+        allEvents.push(redData.event);
+        setEvents((prev) => [...prev, redData.event]);
+
+        if (abort.signal.aborted) break;
+
+        // Blue Team turn
+        const blueRes = await fetch("/api/battle", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          signal: abort.signal,
+          body: JSON.stringify({
+            team: "blue",
+            modelId: config.blueModel.id,
+            scenario: config.scenario,
+            round,
+            events: allEvents,
+            redAction: redData.event,
+            customPrompt: config.bluePrompt,
+          }),
+        });
+
+        if (!blueRes.ok) {
+          const err = await blueRes.json().catch(() => ({ error: "Unknown error" }));
+          const errorEvent: BattleEvent = {
+            timestamp: Date.now(),
+            team: "blue",
+            phase: "SYSTEM",
+            action: "error",
+            detail: `CLI error: ${err.error || "Request failed"}`,
+            success: false,
+          };
+          allEvents.push(errorEvent);
+          setEvents((prev) => [...prev, errorEvent]);
+          continue;
+        }
+
+        const blueData = await blueRes.json();
+        allEvents.push(blueData.event);
+        setEvents((prev) => [...prev, blueData.event]);
+      }
+    } catch (err) {
+      if (!(err instanceof DOMException && err.name === "AbortError")) {
+        const message = err instanceof Error ? err.message : String(err);
+        const errorEvent: BattleEvent = {
+          timestamp: Date.now(),
+          team: "red",
+          phase: "SYSTEM",
+          action: "error",
+          detail: `Battle error: ${message}`,
+          success: false,
+        };
+        setEvents((prev) => [...prev, errorEvent]);
+      }
+    } finally {
+      setCliBattleRunning(false);
+      setPhase("complete");
+      if (timerRef.current) clearInterval(timerRef.current);
+    }
+  }, []);
+
   // ── Handlers ─────────────────────────────────────────────────────────────
-  const canStart = redModel && blueModel && scenario;
+  const canStart = redModel && blueModel && scenario &&
+    (providerMode !== "cli" || !cliValidationError());
 
   const handleStart = useCallback(() => {
     if (!redModel || !blueModel || !scenario) return;
@@ -87,6 +236,7 @@ export default function ArenaPage() {
       bluePrompt: bluePrompt || undefined,
       maxRounds: scenario.maxRounds < maxRounds ? scenario.maxRounds : maxRounds,
       budgetLimitUsd: budgetLimit,
+      providerMode,
     };
 
     setBattleConfig(config);
@@ -102,21 +252,27 @@ export default function ArenaPage() {
       blue: { points: 0, attacksLanded: 0, attacksBlocked: 0, detectionsCorrect: 0, detectionsMissed: 0, avgResponseTimeMs: 0 },
     });
 
-    const controller = runMockBattle(
-      config,
-      (event) => setEvents((prev) => [...prev, event]),
-      (round) => setCurrentRound(round),
-      () => {
-        setPhase("complete");
-        if (timerRef.current) clearInterval(timerRef.current);
-      },
-    );
+    if (providerMode === "cli") {
+      runCliBattle(config);
+    } else {
+      // Mock mode
+      const controller = runMockBattle(
+        config,
+        (event) => setEvents((prev) => [...prev, event]),
+        (round) => setCurrentRound(round),
+        () => {
+          setPhase("complete");
+          if (timerRef.current) clearInterval(timerRef.current);
+        },
+      );
 
-    controllerRef.current = controller;
-    controller.start();
-  }, [redModel, blueModel, scenario, redPrompt, bluePrompt, maxRounds, budgetLimit]);
+      controllerRef.current = controller;
+      controller.start();
+    }
+  }, [redModel, blueModel, scenario, redPrompt, bluePrompt, maxRounds, budgetLimit, providerMode, runCliBattle]);
 
   const handlePause = useCallback(() => {
+    if (providerMode === "cli") return; // CLI mode doesn't support pause
     if (controllerRef.current) {
       if (isPaused) {
         controllerRef.current.resume();
@@ -126,13 +282,15 @@ export default function ArenaPage() {
         setIsPaused(true);
       }
     }
-  }, [isPaused]);
+  }, [isPaused, providerMode]);
 
   const handleStop = useCallback(() => {
-    if (controllerRef.current) {
+    if (providerMode === "cli" && abortRef.current) {
+      abortRef.current.abort();
+    } else if (controllerRef.current) {
       controllerRef.current.stop();
     }
-  }, []);
+  }, [providerMode]);
 
   const handleReset = useCallback(() => {
     setPhase("setup");
@@ -142,6 +300,7 @@ export default function ArenaPage() {
     setCostSoFar(0);
     setBattleConfig(null);
     controllerRef.current = null;
+    abortRef.current = null;
   }, []);
 
   // ── Render ───────────────────────────────────────────────────────────────
@@ -153,6 +312,66 @@ export default function ArenaPage() {
         <div className="text-center mb-2">
           <h2 className="text-3xl font-bold gradient-text-battle mb-2">Battle Arena</h2>
           <p className="text-sm text-gray-500">Configure your teams and start the battle</p>
+        </div>
+
+        {/* Provider Mode Selector */}
+        <div className="glass-card p-4">
+          <div className="flex items-center gap-4">
+            <label className="text-xs text-gray-400 uppercase tracking-wider font-semibold">
+              Provider
+            </label>
+            <div className="flex gap-2">
+              {(["mock", "cli", "api"] as ProviderMode[]).map((mode) => (
+                <button
+                  key={mode}
+                  onClick={() => mode !== "api" && setProviderMode(mode)}
+                  className={`
+                    px-4 py-1.5 rounded-lg text-sm font-semibold transition cursor-pointer
+                    ${mode === "api" ? "opacity-30 cursor-not-allowed" : ""}
+                    ${providerMode === mode
+                      ? "bg-purple-500/20 border border-purple-500/50 text-purple-300"
+                      : "bg-gray-900/40 border border-gray-700/50 text-gray-400 hover:border-gray-600/50"
+                    }
+                  `}
+                  disabled={mode === "api"}
+                  title={mode === "api" ? "API mode coming soon" : `Use ${mode} provider`}
+                >
+                  {mode === "mock" && "🎭 Mock"}
+                  {mode === "cli" && "⚡ CLI"}
+                  {mode === "api" && "🔌 API"}
+                </button>
+              ))}
+            </div>
+
+            {/* CLI Status Indicators */}
+            {providerMode === "cli" && (
+              <div className="flex items-center gap-3 ml-4">
+                {cliLoading ? (
+                  <span className="text-xs text-gray-500">Detecting CLIs...</span>
+                ) : cliStatus ? (
+                  <>
+                    <CliIndicator name="claude" available={cliStatus.claude} />
+                    <CliIndicator name="gemini" available={cliStatus.gemini} />
+                    <CliIndicator name="codex" available={cliStatus.codex} />
+                  </>
+                ) : null}
+              </div>
+            )}
+          </div>
+
+          {/* CLI Validation Error */}
+          {providerMode === "cli" && cliValidationError() && (
+            <div className="mt-2 text-xs text-amber-400/80">
+              ⚠️ {cliValidationError()}
+            </div>
+          )}
+
+          {/* Provider Description */}
+          <div className="mt-2 text-xs text-gray-600">
+            {providerMode === "mock" && "Simulated battles with pre-built action templates. Fast, no API costs."}
+            {providerMode === "cli" && "Real LLM battles via CLI tools. Requires claude, gemini, or codex installed locally."}
+            {providerMode === "api" && "Direct API integration. Coming soon."}
+          </div>
         </div>
 
         {/* Team Configuration: Split Screen */}
@@ -238,11 +457,14 @@ export default function ArenaPage() {
               ${canStart ? "animate-pulse-rb cursor-pointer" : "opacity-30 cursor-not-allowed"}
             `}
           >
-            ⚔️ Start Battle
+            {providerMode === "cli" ? "⚡ Start CLI Battle" : "⚔️ Start Battle"}
           </button>
           {!canStart && (
             <p className="mt-2 text-xs text-gray-600">
-              Select models for both teams and a scenario to begin
+              {providerMode === "cli" && cliValidationError()
+                ? cliValidationError()
+                : "Select models for both teams and a scenario to begin"
+              }
             </p>
           )}
         </div>
@@ -264,6 +486,16 @@ export default function ArenaPage() {
         isPaused={isPaused}
       />
 
+      {/* Provider Badge */}
+      {battleConfig.providerMode === "cli" && (
+        <div className="text-center">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/30 text-xs text-purple-300">
+            <span className="w-1.5 h-1.5 rounded-full bg-purple-400 animate-pulse" />
+            CLI Mode: Real LLM Battles
+          </span>
+        </div>
+      )}
+
       {/* Battle Log */}
       <div className="flex-1" style={{ height: "calc(100% - 200px)" }}>
         <BattleLog events={events} startedAt={startedAt} />
@@ -276,18 +508,25 @@ export default function ArenaPage() {
       <div className="flex items-center justify-center gap-3 pb-2">
         {phase === "battle" && (
           <>
-            <button
-              onClick={handlePause}
-              className="glass-card px-6 py-2 text-sm font-semibold hover:border-yellow-500/50 transition cursor-pointer"
-            >
-              {isPaused ? "▶️ Resume" : "⏸️ Pause"}
-            </button>
+            {providerMode !== "cli" && (
+              <button
+                onClick={handlePause}
+                className="glass-card px-6 py-2 text-sm font-semibold hover:border-yellow-500/50 transition cursor-pointer"
+              >
+                {isPaused ? "▶️ Resume" : "⏸️ Pause"}
+              </button>
+            )}
             <button
               onClick={handleStop}
               className="glass-card px-6 py-2 text-sm font-semibold hover:border-red-500/50 transition text-red-400 cursor-pointer"
             >
               ⏹️ Stop
             </button>
+            {cliBattleRunning && (
+              <span className="text-xs text-gray-500 ml-2">
+                Waiting for LLM response...
+              </span>
+            )}
           </>
         )}
         {phase === "complete" && (
@@ -305,6 +544,7 @@ export default function ArenaPage() {
               </div>
               <div className="text-xs text-gray-500 text-mono mt-1">
                 {events.length} events, {currentRound} rounds, ${costSoFar.toFixed(4)} spent
+                {battleConfig.providerMode === "cli" && " (CLI mode)"}
               </div>
             </div>
             <button
@@ -316,6 +556,21 @@ export default function ArenaPage() {
           </>
         )}
       </div>
+    </div>
+  );
+}
+
+// ── CLI Indicator Component ────────────────────────────────────────────────
+
+function CliIndicator({ name, available }: { name: string; available: boolean }) {
+  return (
+    <div className="flex items-center gap-1.5">
+      <span
+        className={`w-2 h-2 rounded-full ${available ? "bg-green-400" : "bg-red-400"}`}
+      />
+      <span className={`text-xs ${available ? "text-green-400" : "text-gray-500"}`}>
+        {name}
+      </span>
     </div>
   );
 }

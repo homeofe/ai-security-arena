@@ -1,17 +1,24 @@
-import type { BattleConfig, BattleEvent, BattleState } from "@/types";
+import type { BattleConfig, BattleEvent, BattleState, ProviderMode } from "@/types";
 import { calculateScore } from "./scoring";
+import { runCliPrompt } from "./cli-provider";
+import { buildRedTeamPrompt, buildBlueTeamPrompt } from "./prompt-builder";
+import { parseResponse, isValidResponse } from "./response-parser";
 
 /**
  * Arena controller. Orchestrates a battle between Red and Blue teams.
  *
- * TODO: Integrate ai-red-team and ai-blue-team as library imports.
- * For now, this is a placeholder that defines the control flow.
+ * Supports multiple provider modes:
+ * - "mock": Placeholder events (for demo/testing)
+ * - "cli": Real LLM calls via CLI tools (claude, gemini, codex)
+ * - "api": Direct API calls (reserved for future implementation)
  */
 export class ArenaController {
   private state: BattleState;
   private listeners: Set<(event: BattleEvent) => void> = new Set();
+  private providerMode: ProviderMode;
 
   constructor(config: BattleConfig) {
+    this.providerMode = config.providerMode ?? "mock";
     this.state = {
       config,
       status: "waiting",
@@ -49,7 +56,6 @@ export class ArenaController {
 
       this.state.currentRound = round;
 
-      // TODO: Replace with actual ai-red-team and ai-blue-team calls
       // Red Team turn
       const redEvent = await this.executeRedTurn(round);
       this.emit(redEvent);
@@ -94,35 +100,129 @@ export class ArenaController {
 
   /**
    * Execute Red Team's turn.
-   * TODO: Call ai-red-team library with the configured model and prompt.
    */
   private async executeRedTurn(round: number): Promise<BattleEvent> {
-    // Placeholder
+    if (this.providerMode === "mock") {
+      return this.mockRedTurn(round);
+    }
+
+    if (this.providerMode === "cli") {
+      return this.cliRedTurn(round);
+    }
+
+    // API mode (future)
+    return this.mockRedTurn(round);
+  }
+
+  /**
+   * Execute Blue Team's turn.
+   */
+  private async executeBlueTurn(
+    round: number,
+    redAction: BattleEvent,
+  ): Promise<BattleEvent> {
+    if (this.providerMode === "mock") {
+      return this.mockBlueTurn(round);
+    }
+
+    if (this.providerMode === "cli") {
+      return this.cliBlueTurn(round, redAction);
+    }
+
+    // API mode (future)
+    return this.mockBlueTurn(round);
+  }
+
+  // ── CLI Mode ─────────────────────────────────────────────────────────────
+
+  private async cliRedTurn(round: number): Promise<BattleEvent> {
+    try {
+      const { systemPrompt, userPrompt } = buildRedTeamPrompt(
+        this.state.config.scenario,
+        round,
+        this.state.events,
+        this.state.config.redPrompt,
+      );
+
+      const result = await runCliPrompt(
+        this.state.config.redModel.id,
+        systemPrompt,
+        userPrompt,
+        30_000,
+      );
+
+      if (!isValidResponse(result.text)) {
+        return this.errorEvent("red", round, "Empty or invalid response from CLI");
+      }
+
+      return parseResponse(result.text, "red");
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      return this.errorEvent("red", round, `CLI error: ${message}`);
+    }
+  }
+
+  private async cliBlueTurn(round: number, redAction: BattleEvent): Promise<BattleEvent> {
+    try {
+      const { systemPrompt, userPrompt } = buildBlueTeamPrompt(
+        this.state.config.scenario,
+        round,
+        this.state.events,
+        redAction,
+        this.state.config.bluePrompt,
+      );
+
+      const result = await runCliPrompt(
+        this.state.config.blueModel.id,
+        systemPrompt,
+        userPrompt,
+        30_000,
+      );
+
+      if (!isValidResponse(result.text)) {
+        return this.errorEvent("blue", round, "Empty or invalid response from CLI");
+      }
+
+      return parseResponse(result.text, "blue");
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      return this.errorEvent("blue", round, `CLI error: ${message}`);
+    }
+  }
+
+  // ── Mock Mode ────────────────────────────────────────────────────────────
+
+  private mockRedTurn(round: number): BattleEvent {
     return {
       timestamp: Date.now(),
       team: "red",
       phase: "RECON",
       action: "scan",
-      detail: `[Round ${round}] Red Team scanning target (placeholder)`,
-      success: false,
+      detail: `[Round ${round}] Red Team scanning target (mock mode)`,
+      success: Math.random() > 0.4,
     };
   }
 
-  /**
-   * Execute Blue Team's turn.
-   * TODO: Call ai-blue-team library with the configured model, prompt, and Red's action.
-   */
-  private async executeBlueTurn(
-    round: number,
-    _redAction: BattleEvent,
-  ): Promise<BattleEvent> {
-    // Placeholder
+  private mockBlueTurn(round: number): BattleEvent {
     return {
       timestamp: Date.now(),
       team: "blue",
       phase: "DETECT",
       action: "monitor",
-      detail: `[Round ${round}] Blue Team monitoring logs (placeholder)`,
+      detail: `[Round ${round}] Blue Team monitoring logs (mock mode)`,
+      success: Math.random() > 0.4,
+    };
+  }
+
+  // ── Helpers ──────────────────────────────────────────────────────────────
+
+  private errorEvent(team: "red" | "blue", round: number, message: string): BattleEvent {
+    return {
+      timestamp: Date.now(),
+      team,
+      phase: "SYSTEM",
+      action: "error",
+      detail: `[Round ${round}] ${message}`,
       success: false,
     };
   }
