@@ -59,6 +59,34 @@ export default function ArenaPage() {
   const controllerRef = useRef<MockBattleController | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const abortRef = useRef<AbortController | null>(null);
+  const eventsRef = useRef<BattleEvent[]>([]);
+
+  // ── Save completed battle to database ────────────────────────────────────
+  const saveBattle = useCallback(async (config: BattleConfig, battleEvents: BattleEvent[], elapsed: number) => {
+    try {
+      const finalScore = calculateScore(battleEvents);
+      const state = {
+        config,
+        status: "completed" as const,
+        currentRound: config.maxRounds,
+        events: battleEvents,
+        score: finalScore,
+        startedAt: Date.now() - elapsed,
+        completedAt: Date.now(),
+        costSoFar: 0,
+      };
+      const res = await fetch("/api/matches", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(state),
+      });
+      if (!res.ok) {
+        console.error("Failed to save match:", await res.text());
+      }
+    } catch (err) {
+      console.error("Failed to save match:", err);
+    }
+  }, []);
 
   // ── Fetch CLI Status ─────────────────────────────────────────────────────
   useEffect(() => {
@@ -217,8 +245,11 @@ export default function ArenaPage() {
       setCliBattleRunning(false);
       setPhase("complete");
       if (timerRef.current) clearInterval(timerRef.current);
+      if (battleConfig) {
+        saveBattle(battleConfig, allEvents, elapsedMs);
+      }
     }
-  }, []);
+  }, [battleConfig, elapsedMs, saveBattle]);
 
   // ── Handlers ─────────────────────────────────────────────────────────────
   const canStart = redModel && blueModel && scenario &&
@@ -258,11 +289,15 @@ export default function ArenaPage() {
       // Mock mode
       const controller = runMockBattle(
         config,
-        (event) => setEvents((prev) => [...prev, event]),
+        (event) => {
+          eventsRef.current = [...eventsRef.current, event];
+          setEvents((prev) => [...prev, event]);
+        },
         (round) => setCurrentRound(round),
         () => {
           setPhase("complete");
           if (timerRef.current) clearInterval(timerRef.current);
+          saveBattle(config, eventsRef.current, elapsedMs);
         },
       );
 
@@ -295,6 +330,7 @@ export default function ArenaPage() {
   const handleReset = useCallback(() => {
     setPhase("setup");
     setEvents([]);
+    eventsRef.current = [];
     setCurrentRound(0);
     setElapsedMs(0);
     setCostSoFar(0);
