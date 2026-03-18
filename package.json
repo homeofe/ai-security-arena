@@ -1,0 +1,35 @@
+{
+  "name": "ai-security-arena",
+  "version": "0.1.0",
+  "description": "Interactive web interface for AI-powered Red Team vs Blue Team security battles",
+  "private": true,
+  "license": "Apache-2.0",
+  "author": "Elvatis <emre.kohler@elvatis.com>",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "next": "^15.0.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "ws": "^8.18.0",
+    "better-sqlite3": "^11.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@types/ws": "^8.5.0",
+    "@types/better-sqlite3": "^7.6.0",
+    "typescript": "^5.7.0",
+    "tailwindcss": "^4.0.0",
+    "vitest": "^3.0.0",
+    "eslint": "^9.0.0",
+    "eslint-config-next": "^15.0.0"
+  }
+}
