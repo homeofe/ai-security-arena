@@ -133,32 +133,36 @@ function buildMinimalEnv(): Record<string, string> {
  * The full prompt (system + user combined) is passed as a single string.
  */
 function buildCliConfig(cli: CliName, fullPrompt: string): CliConfig {
+  // On Windows, spawn needs shell: true to resolve .cmd/.bat wrappers
+  const needsShell = process.platform === "win32";
+
+  // Pass prompts via stdin to avoid Windows command-line length limits (~8191 chars)
+  // and shell escaping issues with special characters in prompts.
   switch (cli) {
     case "claude":
       return {
         cmd: "claude",
-        args: [
-          "--print",
-          "--permission-mode", "bypassPermissions",
-          "-p", fullPrompt,
-        ],
-        stdinPrompt: "",
-        shell: false,
+        args: ["--print", "--permission-mode", "bypassPermissions"],
+        stdinPrompt: fullPrompt,
+        shell: needsShell,
       };
 
     case "gemini":
+      // Gemini requires -p/--prompt to run in headless (non-interactive) mode.
+      // The -p value is appended to stdin input, so we pipe the real prompt
+      // via stdin and use a short -p trigger to activate headless mode.
       return {
         cmd: "gemini",
-        args: ["-p", fullPrompt],
-        stdinPrompt: "",
-        shell: false,
+        args: ["-p", "Respond to the instructions above.", "--output-format", "text"],
+        stdinPrompt: fullPrompt,
+        shell: needsShell,
       };
 
     case "codex":
       return {
         cmd: "codex",
-        args: ["exec", fullPrompt],
-        stdinPrompt: "",
+        args: ["exec"],
+        stdinPrompt: fullPrompt,
         shell: true,
       };
   }
