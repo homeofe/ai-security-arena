@@ -9,6 +9,7 @@
 import { execSync, spawn, type ChildProcess } from "child_process";
 import { homedir } from "os";
 import type { CliStatus } from "@/types";
+import { getEffectiveApiKeys } from "@/lib/config";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -114,13 +115,17 @@ function buildMinimalEnv(): Record<string, string> {
     if (process.env[key]) env[key] = process.env[key]!;
   }
 
-  // API keys that CLIs may need
+  // API keys from config file (UI-configured) take priority over env vars
+  const configKeys = getEffectiveApiKeys();
+  Object.assign(env, configKeys);
+
+  // Additional API keys and config dirs from env (fallback for keys not in config)
   for (const key of [
     "GOOGLE_APPLICATION_CREDENTIALS", "ANTHROPIC_API_KEY", "CLAUDE_API_KEY",
     "CODEX_API_KEY", "OPENAI_API_KEY", "XDG_CONFIG_HOME", "XDG_DATA_HOME",
     "XDG_CACHE_HOME", "XDG_RUNTIME_DIR", "DBUS_SESSION_BUS_ADDRESS",
   ]) {
-    if (process.env[key]) env[key] = process.env[key]!;
+    if (!env[key] && process.env[key]) env[key] = process.env[key]!;
   }
 
   return env;
