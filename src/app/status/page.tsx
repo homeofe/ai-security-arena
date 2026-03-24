@@ -46,14 +46,14 @@ const CATEGORY_ICON: Record<string, string> = {
   server: "\u2699\ufe0f",
   database: "\ud83d\uddc4\ufe0f",
   cli: "\ud83d\udcbb",
-  env: "\ud83d\udd11",
+  keys: "\ud83d\udd11",
 };
 
 function categorize(name: string): string {
   if (name.includes("Server")) return "server";
   if (name.includes("Database") || name.includes("SQLite")) return "database";
   if (name.includes("CLI")) return "cli";
-  if (name.includes("Env")) return "env";
+  if (name.includes("API Key") || name.includes("Credentials")) return "keys";
   return "server";
 }
 
@@ -62,7 +62,7 @@ function categoryLabel(cat: string): string {
     case "server": return "Server";
     case "database": return "Database";
     case "cli": return "CLI Connectors";
-    case "env": return "Environment";
+    case "keys": return "API Keys";
     default: return cat;
   }
 }
@@ -109,7 +109,7 @@ export default function StatusPage() {
     }
   }
 
-  const categoryOrder = ["server", "database", "cli", "env"];
+  const categoryOrder = ["server", "database", "cli", "keys"];
 
   return (
     <div className="space-y-6 animate-float-in">
