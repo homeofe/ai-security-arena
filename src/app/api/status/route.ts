@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { detectAvailableClis } from "@/lib/cli-provider";
+import { getEffectiveApiKey } from "@/lib/config";
 
 export const dynamic = "force-dynamic";
 
@@ -80,14 +81,20 @@ export async function GET() {
     });
   }
 
-  // 4. Environment check
-  const envKeys = ["ANTHROPIC_API_KEY", "OPENAI_API_KEY", "GOOGLE_APPLICATION_CREDENTIALS"];
-  for (const key of envKeys) {
-    const value = process.env[key];
+  // 4. API key check (config file + env vars)
+  const apiKeyChecks = [
+    { key: "ANTHROPIC_API_KEY", label: "Anthropic API Key" },
+    { key: "OPENAI_API_KEY", label: "OpenAI API Key" },
+    { key: "GOOGLE_API_KEY", label: "Google AI API Key" },
+    { key: "GOOGLE_APPLICATION_CREDENTIALS", label: "Google Credentials" },
+  ];
+  for (const { key, label } of apiKeyChecks) {
+    const value = getEffectiveApiKey(key);
+    const source = value ? (process.env[key] === value ? "env" : "config") : null;
     components.push({
-      name: `Env: ${key}`,
+      name: label,
       status: value ? "healthy" : "degraded",
-      detail: value ? "Set" : "Not set",
+      detail: value ? `Set (via ${source})` : "Not configured - set in Settings",
     });
   }
 
