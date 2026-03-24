@@ -105,17 +105,40 @@ pnpm dev
 
 Open http://localhost:3000
 
-### Environment Variables
+### API Key Configuration
+
+**Option A: Via the Settings UI (recommended)**
+
+Navigate to http://localhost:3000/settings and enter your API keys directly.
+Keys are stored locally in `.data/config.json` (gitignored) and never exposed to the browser.
+
+**Option B: Via environment variables**
 
 ```env
 # At least one LLM provider key required
 ANTHROPIC_API_KEY=sk-...
 OPENAI_API_KEY=sk-...
-GOOGLE_AI_API_KEY=...
+GOOGLE_API_KEY=AIza...
 
 # Optional: budget limit per match (USD)
 MATCH_BUDGET_LIMIT=1.00
 ```
+
+Keys set via the Settings UI take priority over environment variables.
+
+### CLI Tools (for CLI mode)
+
+CLI mode requires the respective CLI tools installed on your system:
+
+| Provider | CLI Tool | Install |
+|----------|---------|---------|
+| Anthropic (Claude) | `claude` | `npm install -g @anthropic-ai/claude-code` |
+| Google (Gemini) | `gemini` | `npm install -g @anthropic-ai/gemini-cli` |
+| OpenAI (GPT/Codex) | `codex` | `npm install -g @openai/codex` |
+
+Check the **Status** page (http://localhost:3000/status) to verify all connectors are healthy.
+
+Mock mode works without any API keys or CLI tools installed.
 
 ## Project Structure
 
@@ -130,8 +153,14 @@ ai-security-arena/
 │   │   │   └── page.tsx      # Match history + replays
 │   │   ├── leaderboard/
 │   │   │   └── page.tsx      # Model rankings
+│   │   ├── settings/
+│   │   │   └── page.tsx      # API key management
+│   │   ├── status/
+│   │   │   └── page.tsx      # System health dashboard
 │   │   └── api/
 │   │       ├── battle/       # Start/stop battles
+│   │       ├── settings/     # API key CRUD
+│   │       ├── status/       # System health check
 │   │       ├── ws/           # WebSocket endpoint
 │   │       └── matches/      # Match CRUD
 │   ├── components/
@@ -153,6 +182,7 @@ ai-security-arena/
 │   ├── lib/
 │   │   ├── arena.ts              # Arena controller (mock/cli/api modes)
 │   │   ├── cli-provider.ts       # CLI-based LLM provider (claude/gemini/codex)
+│   │   ├── config.ts             # Server-side config store (API keys)
 │   │   ├── prompt-builder.ts     # Battle prompt construction per round
 │   │   ├── response-parser.ts    # Parse LLM responses into BattleEvents
 │   │   ├── report-generator.ts   # Post-match analysis and report generation
@@ -193,6 +223,9 @@ ai-security-arena/
 | 15 | Leaderboard with model rankings | ✅ Done |
 | 16 | Scenario builder | ✅ Done |
 | 17 | Deployment (Docker + Vercel) | ✅ Done |
+| 18 | System status page (health monitoring) | ✅ Done |
+| 19 | Settings page (API key management via UI) | ✅ Done |
+| 20 | Windows compatibility (CLI spawning, native modules) | ✅ Done |
 
 ## License
 
