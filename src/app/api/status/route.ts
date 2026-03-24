@@ -6,9 +6,10 @@ export const dynamic = "force-dynamic";
 
 interface ComponentStatus {
   name: string;
-  status: "healthy" | "degraded" | "down";
+  status: "healthy" | "degraded" | "down" | "info";
   detail: string;
   latencyMs?: number;
+  optional?: boolean;
 }
 
 /**
@@ -93,14 +94,16 @@ export async function GET() {
     const source = value ? (process.env[key] === value ? "env" : "config") : null;
     components.push({
       name: label,
-      status: value ? "healthy" : "degraded",
-      detail: value ? `Set (via ${source})` : "Not configured - set in Settings",
+      status: value ? "healthy" : "info",
+      detail: value ? `Set (via ${source})` : "Not configured - optional for CLI/Mock mode",
+      optional: true,
     });
   }
 
-  // Overall status
-  const hasDown = components.some((c) => c.status === "down");
-  const hasDegraded = components.some((c) => c.status === "degraded");
+  // Overall status: only core components (non-optional) affect the overall health
+  const coreComponents = components.filter((c) => !c.optional);
+  const hasDown = coreComponents.some((c) => c.status === "down");
+  const hasDegraded = coreComponents.some((c) => c.status === "degraded");
   const overall = hasDown ? "degraded" : hasDegraded ? "degraded" : "healthy";
 
   return NextResponse.json({

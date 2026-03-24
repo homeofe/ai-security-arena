@@ -4,9 +4,10 @@ import { useState, useEffect, useCallback } from "react";
 
 interface ComponentStatus {
   name: string;
-  status: "healthy" | "degraded" | "down";
+  status: "healthy" | "degraded" | "down" | "info";
   detail: string;
   latencyMs?: number;
+  optional?: boolean;
 }
 
 interface SystemStatus {
@@ -22,24 +23,28 @@ const STATUS_ICON: Record<string, string> = {
   healthy: "\u2713",
   degraded: "!",
   down: "\u2717",
+  info: "-",
 };
 
 const STATUS_COLOR: Record<string, string> = {
   healthy: "text-green-400",
   degraded: "text-yellow-400",
   down: "text-red-400",
+  info: "text-gray-400",
 };
 
 const STATUS_BG: Record<string, string> = {
   healthy: "bg-green-400/10 border-green-400/30",
   degraded: "bg-yellow-400/10 border-yellow-400/30",
   down: "bg-red-400/10 border-red-400/30",
+  info: "bg-gray-400/10 border-gray-400/30",
 };
 
 const STATUS_DOT: Record<string, string> = {
   healthy: "bg-green-400",
   degraded: "bg-yellow-400",
   down: "bg-red-400",
+  info: "bg-gray-400",
 };
 
 const CATEGORY_ICON: Record<string, string> = {
@@ -132,6 +137,9 @@ export default function StatusPage() {
                 </h3>
                 <p className="text-sm text-gray-500 mt-1">
                   {status.platform} / Node {status.nodeVersion} - checked in {status.totalLatencyMs}ms
+                  {status.overall === "healthy" && status.components.some((c: ComponentStatus) => c.optional && c.status === "info") && (
+                    <span className="ml-2 text-gray-400">- Mock mode ready, configure API keys in <a href="/settings" className="text-purple-400 hover:text-purple-300 underline">Settings</a> for CLI mode</span>
+                  )}
                 </p>
               </div>
             </div>
